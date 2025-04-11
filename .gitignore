@@ -1,0 +1,26 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore audio and dataset
+*.wav
+dataset/
+workspace/
+logs/
+
+# Ignore Jupyter checkpoint files
+checkpoint/
+
+# Ignore model checkpoints
+*.ckpt
+*.pt
+*.pth
+
+# Ignore VSCode settings (if used)
+.vscode/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
