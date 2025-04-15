@@ -81,7 +81,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Tiêu đề nổi bật
-st.markdown('<div class="custom-title">🔊 AudioSep - Tách âm thanh theo mô tả</div>', unsafe_allow_html=True)
+st.markdown('<div class="custom-title">🔊 AudioSep -Phân tách âm thanh theo truy vấn ngôn ngữ tự nhiên</div>', unsafe_allow_html=True)
 
 # Upload file âm thanh
 uploaded_file = st.file_uploader("📂 Tải lên file âm thanh (.wav)", type=["wav"])
