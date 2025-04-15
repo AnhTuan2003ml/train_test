@@ -31,3 +31,4 @@ lass_synthetic_validation.csv
 lass_validation.json
 config/audiosep_base.yaml
 
+lightning_logs/version_87/events.out.tfevents.1744379313.ubuntu-System-Product-Name.50060.1
