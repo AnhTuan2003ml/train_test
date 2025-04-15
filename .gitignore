@@ -9,6 +9,7 @@ __pycache__/
 dataset/
 workspace/
 logs/
+lightning_logs
 
 # Ignore Jupyter checkpoint files
 checkpoint/
@@ -24,3 +25,9 @@ checkpoint/
 # Ignore system files
 .DS_Store
 Thumbs.db
+lass_synthetic_validation.csv
+.gitignore
+.gitignore
+lass_validation.json
+config/audiosep_base.yaml
+

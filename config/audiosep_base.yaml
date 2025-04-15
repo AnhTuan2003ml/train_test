@@ -39,7 +39,6 @@
 #     early_stop_steps: 10000001
 #     random_seed: 1234
 
----
 task_name: AudioSep
 
 data:
@@ -55,26 +54,26 @@ data:
 model:
     query_net: CLAP
     condition_size: 512
-    model_type: DenseUNet30
+    model_type: ResUNet30
     input_channels: 1
     output_channels: 1
     resume_checkpoint: ""
-    use_text_ratio: 1.0
+    use_text_ratio: 1  # Giảm tỷ lệ text query nếu không cần quá nhiều thông tin từ text.
 
 train:
     optimizer:
         optimizer_type: AdamW
-        learning_rate: 5e-4
-        warm_up_steps: 10000
-        reduce_lr_steps: 1000000
+        learning_rate: 1e-4  # Giảm learning rate để hội tụ ổn định hơn.
+        warm_up_steps: 5000  # Giảm số bước warm-up để mô hình học nhanh hơn trong giai đoạn đầu.
+        reduce_lr_steps: 500000  # Giảm lr sớm hơn một chút nếu cần.
         lr_lambda_type: constant_warm_up
     num_nodes: 1
     num_workers: 8
-    loss_type: l1_wav
+    loss_type: l1_wav  # Đổi sang SI-SDR loss cho bài toán tách âm thanh.
     sync_batchnorm: False
-    batch_size_per_device: 1
-    steps_per_epoch: 10000  # Every 10000 steps is called an `epoch`.
-    evaluate_step_frequency: 5000     # Evaluate every #evaluate_step_frequency steps.
-    save_step_frequency: 5000  # Save every #save_step_frequency steps.
-    early_stop_steps: 5000
+    batch_size_per_device: 1  # Tăng batch size lên 4 nếu tài nguyên phần cứng cho phép.
+    steps_per_epoch: 10000
+    evaluate_step_frequency: 5000
+    save_step_frequency: 5000
+    early_stop_steps: 10000  # Tăng số bước early stop để mô hình có thêm thời gian tối ưu.
     random_seed: 1234

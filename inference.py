@@ -9,7 +9,7 @@ from pathlib import Path
 def inference_single_audio(
     audio_path,
     caption,
-    checkpoint_path,
+    checkpoint_path='workspace/AudioSep/checkpoints/train/audiosep_base,devices=1/step=65000.ckpt',
     config_yaml='config/audiosep_base.yaml',
     device='cpu'
 ):
@@ -53,9 +53,9 @@ def inference_single_audio(
 
 # Ví dụ sử dụng
 if __name__ == "__main__":
-    audio_path = "/content/mix1.wav"
-    caption = "a man is speaking "
-    checkpoint_path = "/content/step=245000.ckpt"
+    audio_path = "mix1.wav"
+    caption = "a man is speaking"
+    checkpoint_path = "step=1000.ckpt"
 
     separated_audio = inference_single_audio(
         audio_path=audio_path,

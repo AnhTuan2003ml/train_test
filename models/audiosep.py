@@ -146,6 +146,7 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     
 
 def get_model_class(model_type):
+    print(model_type)
     if model_type == 'ResUNet30':
         from models.resunet import ResUNet30
         return ResUNet30

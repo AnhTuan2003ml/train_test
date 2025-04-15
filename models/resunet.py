@@ -330,61 +330,85 @@ class ResUNet30_Base(nn.Module, Base):
         )
         self.encoder_block3 = EncoderBlockRes1B(
             in_channels=64,
-            out_channels=96,
+            out_channels=128,
             kernel_size=(3, 3),
             downsample=(2, 2),
             momentum=momentum,
             has_film=True,
         )
-        # self.encoder_block4 = EncoderBlockRes1B(
-        #     in_channels=96,
-        #     out_channels=128,
-        #     kernel_size=(3, 3),
-        #     downsample=(2, 2),
-        #     momentum=momentum,
-        #     has_film=True,
-        # )
-        # self.encoder_block5 = EncoderBlockRes1B(
-        #     in_channels=128,
-        #     out_channels=192,
-        #     kernel_size=(3, 3),
-        #     downsample=(2, 2),
-        #     momentum=momentum,
-        #     has_film=True,
-        # )
-        # self.encoder_block6 = EncoderBlockRes1B(
-        #     in_channels=192,
-        #     out_channels=256,
-        #     kernel_size=(3, 3),
-        #     downsample=(1, 2),
-        #     momentum=momentum,
-        #     has_film=True,
-        # )
+        self.encoder_block4 = EncoderBlockRes1B(
+            in_channels=128,
+            out_channels=256,
+            kernel_size=(3, 3),
+            downsample=(2, 2),
+            momentum=momentum,
+            has_film=True,
+        )
+        self.encoder_block5 = EncoderBlockRes1B(
+            in_channels=256,
+            out_channels=384,
+            kernel_size=(3, 3),
+            downsample=(2, 2),
+            momentum=momentum,
+            has_film=True,
+        )
+        self.encoder_block6 = EncoderBlockRes1B(
+            in_channels=384,
+            out_channels=384,
+            kernel_size=(3, 3),
+            downsample=(1, 2),
+            momentum=momentum,
+            has_film=True,
+        )
         self.conv_block7a = EncoderBlockRes1B(
-            in_channels=96,
-            out_channels=96,
+            in_channels=384,
+            out_channels=384,
             kernel_size=(3, 3),
             downsample=(1, 1),
             momentum=momentum,
             has_film=True,
         )
         self.decoder_block1 = DecoderBlockRes1B(
-            in_channels=96,
-            out_channels=96,
+            in_channels=384,
+            out_channels=384,
             kernel_size=(3, 3),
-            upsample=(2, 2),
+            upsample=(1, 2),
             momentum=momentum,
             has_film=True,
         )
         self.decoder_block2 = DecoderBlockRes1B(
-            in_channels=96,
-            out_channels=64,
+            in_channels=384,
+            out_channels=384,
             kernel_size=(3, 3),
             upsample=(2, 2),
             momentum=momentum,
             has_film=True,
         )
         self.decoder_block3 = DecoderBlockRes1B(
+            in_channels=384,
+            out_channels=256,
+            kernel_size=(3, 3),
+            upsample=(2, 2),
+            momentum=momentum,
+            has_film=True,
+        )
+        self.decoder_block4 = DecoderBlockRes1B(
+            in_channels=256,
+            out_channels=128,
+            kernel_size=(3, 3),
+            upsample=(2, 2),
+            momentum=momentum,
+            has_film=True,
+        )
+        self.decoder_block5 = DecoderBlockRes1B(
+            in_channels=128,
+            out_channels=64,
+            kernel_size=(3, 3),
+            upsample=(2, 2),
+            momentum=momentum,
+            has_film=True,
+        )
+        self.decoder_block6 = DecoderBlockRes1B(
             in_channels=64,
             out_channels=32,
             kernel_size=(3, 3),
@@ -392,30 +416,6 @@ class ResUNet30_Base(nn.Module, Base):
             momentum=momentum,
             has_film=True,
         )
-        # self.decoder_block4 = DecoderBlockRes1B(
-        #     in_channels=128,
-        #     out_channels=96,
-        #     kernel_size=(3, 3),
-        #     upsample=(2, 2),
-        #     momentum=momentum,
-        #     has_film=True,
-        # )
-        # self.decoder_block5 = DecoderBlockRes1B(
-        #     in_channels=96,
-        #     out_channels=64,
-        #     kernel_size=(3, 3),
-        #     upsample=(2, 2),
-        #     momentum=momentum,
-        #     has_film=True,
-        # )
-        # self.decoder_block6 = DecoderBlockRes1B(
-        #     in_channels=64,
-        #     out_channels=32,
-        #     kernel_size=(3, 3),
-        #     upsample=(2, 2),
-        #     momentum=momentum,
-        #     has_film=True,
-        # )
 
         self.after_conv = nn.Conv2d(
             in_channels=32,
@@ -521,72 +521,77 @@ class ResUNet30_Base(nn.Module, Base):
 
     def forward(self, mixtures, film_dict):
         """
-        Forward pass of the model.
-
         Args:
-            mixtures (Tensor): Input audio tensor of shape (batch_size, segment_samples, channels_num)
-            film_dict (dict): Dictionary containing FiLM parameters for each block
+          input: (batch_size, segment_samples, channels_num)
 
-        Returns:
-            output_dict (dict): {
-                'waveform': Tensor of shape (batch_size, target_sources_num * output_channels, subbands_num, segment_samples)
-            }
+        Outputs:
+          output_dict: {
+            'wav': (batch_size, segment_samples, channels_num),
+            'sp': (batch_size, channels_num, time_steps, freq_bins)}
         """
 
-        # Convert waveform to magnitude and phase spectrogram
         mag, cos_in, sin_in = self.wav_to_spectrogram_phase(mixtures)
-        x = mag  # (batch_size, channels, time_steps, freq_bins)
+        x = mag
 
-        # Apply batch normalization
-        x = x.transpose(1, 3)  # Move frequency to channel position
+        # Batch normalization
+        x = x.transpose(1, 3)
         x = self.bn0(x)
-        x = x.transpose(1, 3)  # Move frequency back
+        x = x.transpose(1, 3)
+        """(batch_size, chanenls, time_steps, freq_bins)"""
 
-        # Pad time dimension so it is divisible by time_downsample_ratio
+        # Pad spectrogram to be evenly divided by downsample ratio.
         origin_len = x.shape[2]
-        pad_len = (int(np.ceil(origin_len / self.time_downsample_ratio)) * self.time_downsample_ratio) - origin_len
-        x = F.pad(x, pad=(0, 0, 0, pad_len))  # Pad time dimension only
+        pad_len = (
+            int(np.ceil(x.shape[2] / self.time_downsample_ratio)) * self.time_downsample_ratio
+            - origin_len
+        )
+        x = F.pad(x, pad=(0, 0, 0, pad_len))
+        """(batch_size, channels, padded_time_steps, freq_bins)"""
 
-        # Remove last frequency bin to make freq divisible by 2 (e.g., 513 -> 512)
-        x = x[..., :-1]  # (batch_size, channels, T, F)
+        # Let frequency bins be evenly divided by 2, e.g., 513 -> 512
+        x = x[..., 0 : x.shape[-1] - 1]  # (bs, channels, T, F)
 
-        # --- U-Net Encoder ---
+        # UNet
         x = self.pre_conv(x)
-        x1_pool, x1 = self.encoder_block1(x, film_dict['encoder_block1'])  # Downsampled once
-        x2_pool, x2 = self.encoder_block2(x1_pool, film_dict['encoder_block2'])  # Downsampled twice
-        x3_pool, x3 = self.encoder_block3(x2_pool, film_dict['encoder_block3'])  # ...
-        # x4_pool, x4 = self.encoder_block4(x3_pool, film_dict['encoder_block4'])
-        # x5_pool, x5 = self.encoder_block5(x4_pool, film_dict['encoder_block5'])
-        # x6_pool, x6 = self.encoder_block6(x5_pool, film_dict['encoder_block6'])
+        x1_pool, x1 = self.encoder_block1(x, film_dict['encoder_block1'])  # x1_pool: (bs, 32, T / 2, F / 2)
+        x2_pool, x2 = self.encoder_block2(x1_pool, film_dict['encoder_block2'])  # x2_pool: (bs, 64, T / 4, F / 4)
+        x3_pool, x3 = self.encoder_block3(x2_pool, film_dict['encoder_block3'])  # x3_pool: (bs, 128, T / 8, F / 8)
+        x4_pool, x4 = self.encoder_block4(x3_pool, film_dict['encoder_block4'])  # x4_pool: (bs, 256, T / 16, F / 16)
+        x5_pool, x5 = self.encoder_block5(x4_pool, film_dict['encoder_block5'])  # x5_pool: (bs, 384, T / 32, F / 32)
+        x6_pool, x6 = self.encoder_block6(x5_pool, film_dict['encoder_block6'])  # x6_pool: (bs, 384, T / 32, F / 64)
+        x_center, _ = self.conv_block7a(x6_pool, film_dict['conv_block7a'])  # (bs, 384, T / 32, F / 64)
+        x7 = self.decoder_block1(x_center, x6, film_dict['decoder_block1'])  # (bs, 384, T / 32, F / 32)
+        x8 = self.decoder_block2(x7, x5, film_dict['decoder_block2'])  # (bs, 384, T / 16, F / 16)
+        x9 = self.decoder_block3(x8, x4, film_dict['decoder_block3'])  # (bs, 256, T / 8, F / 8)
+        x10 = self.decoder_block4(x9, x3, film_dict['decoder_block4'])  # (bs, 128, T / 4, F / 4)
+        x11 = self.decoder_block5(x10, x2, film_dict['decoder_block5'])  # (bs, 64, T / 2, F / 2)
+        x12 = self.decoder_block6(x11, x1, film_dict['decoder_block6'])  # (bs, 32, T, F)
 
-        # Bottleneck
-        x_center, _ = self.conv_block7a(x3_pool, film_dict['conv_block7a'])
+        x = self.after_conv(x12)
 
-        # --- U-Net Decoder ---
-        x7 = self.decoder_block1(x_center, x3, film_dict['decoder_block1'])
-        x8 = self.decoder_block2(x7, x2, film_dict['decoder_block2'])
-        x9 = self.decoder_block3(x8, x1, film_dict['decoder_block3'])
-        # x10 = self.decoder_block4(x9, x3, film_dict['decoder_block4'])
-        # x11 = self.decoder_block5(x10, x2, film_dict['decoder_block5'])
-        # x12 = self.decoder_block6(x11, x1, film_dict['decoder_block6'])
+        # Recover shape
+        x = F.pad(x, pad=(0, 1))
+        x = x[:, :, 0:origin_len, :]
 
-        # Final convolution layer
-        x = self.after_conv(x9)
+        audio_length = mixtures.shape[2]
 
-        # Restore original frequency and time dimensions
-        x = F.pad(x, pad=(0, 1))  # Add back frequency bin
-        x = x[:, :, :origin_len, :]  # Remove padding in time dimension
-
-        # Convert processed spectrogram back to waveform
+        # Recover each subband spectrograms to subband waveforms. Then synthesis
+        # the subband waveforms to a waveform.
         separated_audio = self.feature_maps_to_wav(
             input_tensor=x,
+            # input_tensor: (batch_size, target_sources_num * output_channels * self.K, T, F')
             sp=mag,
+            # sp: (batch_size, input_channels, T, F')
             sin_in=sin_in,
+            # sin_in: (batch_size, input_channels, T, F')
             cos_in=cos_in,
-            audio_length=mixtures.shape[2]
+            # cos_in: (batch_size, input_channels, T, F')
+            audio_length=audio_length,
         )
-        # Return output
+        # （batch_size, target_sources_num * output_channels, subbands_num, segment_samples)
+
         output_dict = {'waveform': separated_audio}
+
         return output_dict
 
 
@@ -594,7 +599,7 @@ def get_film_meta(module):
 
     film_meta = {}
 
-    if hasattr(module, 'has_film'):
+    if hasattr(module, 'has_film'):\
 
         if module.has_film:
             film_meta['beta1'] = module.bn1.num_features
@@ -707,3 +712,5 @@ class ResUNet30(nn.Module):
                     chunk_out_np[:, NL:]
 
         return out_np
+
+

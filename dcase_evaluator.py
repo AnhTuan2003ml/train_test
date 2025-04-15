@@ -152,5 +152,5 @@ if __name__ == '__main__':
         audio_dir='lass_validation',
     )
 
-    checkpoint_path='audiosep_16k,baseline,step=200000.ckpt'
+    checkpoint_path='workspace/AudioSep/checkpoints/train/audiosep_base,devices=1/step=5000.ckpt'
     eval(dcase_evaluator, checkpoint_path, device = "cuda")

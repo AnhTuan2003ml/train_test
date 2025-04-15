@@ -181,30 +181,33 @@ class DenseUNet30(nn.Module,Base):
         self.bn0 = nn.BatchNorm2d(513)
         self.pre_conv = nn.Conv2d(input_channels, 32, kernel_size=1)
                 # encoder
-        self.encoder_block1 = block(32, 2)       # out: 64
-        self.trans_down1 = td(64, 64)
+        # Encoder cải tiến
+        self.encoder_block1 = block(32, 4)       # 32 + (4 × 16) = 96
+        self.trans_down1 = td(96, 128)
 
-        self.encoder_block2 = block(64, 2)       # out: 96
-        self.trans_down2 = td(96, 96)
+        self.encoder_block2 = block(128, 4)      # 128 + (4 × 16) = 192
+        self.trans_down2 = td(192, 224)
 
-        self.encoder_block3 = block(96, 2)       # out: 128
-        self.trans_down3 = td(128, 128)
+        self.encoder_block3 = block(224, 4)      # 224 + (4 × 16) = 288
+        self.trans_down3 = td(288, 320)
 
-        # bottleneck
-        self.bottleneck = block(128, 2)          # out: 160
+        # Bottleneck cải tiến
+        self.bottleneck = block(320, 4)          # 320 + (4 × 16) = 384
 
         # decoder
-        self.trans_up3 = tu(160, 96)             # upsample: 96
-        self.decoder_block3 = block(96 + 128, 2) # input = up3 + x3 = 224
+        # Decoder sửa theo encoder mới
+        self.trans_up3 = tu(384, 288)
+        self.decoder_block3 = block(288 + 288, 4)  # skip từ encoder3
 
-        self.trans_up2 = tu(256, 96)
-        self.decoder_block2 = block(192, 2)  # = 160
+        self.trans_up2 = tu(576, 192)
+        self.decoder_block2 = block(192 + 192, 4)  # skip từ encoder2
 
-        self.trans_up1 = tu(224, 64)
-        self.decoder_block1 = block(128, 2)  # = 96
+        self.trans_up1 = tu(384, 128)
+        self.decoder_block1 = block(128 + 96, 4)   # skip từ encoder1
 
-        # output conv
-        self.after_conv = nn.Conv2d(160, output_channels * self.K, kernel_size=1)
+        # Final conv
+        self.after_conv = nn.Conv2d(224, output_channels * self.K, kernel_size=1)
+
 
         self.film_meta = get_film_meta(self)
         self.film = FiLM(self.film_meta, condition_size)
