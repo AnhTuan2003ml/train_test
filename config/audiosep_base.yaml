@@ -54,7 +54,7 @@ data:
 model:
     query_net: CLAP
     condition_size: 512
-    model_type: ResUNet30
+    model_type: DenseUNet30
     input_channels: 1
     output_channels: 1
     resume_checkpoint: ""

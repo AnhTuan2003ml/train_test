@@ -9,7 +9,7 @@ from pathlib import Path
 def inference_single_audio(
     audio_path,
     caption,
-    checkpoint_path='workspace/AudioSep/checkpoints/train/audiosep_base,devices=1/step=65000.ckpt',
+    checkpoint_path='step=170000.ckpt',
     config_yaml='config/audiosep_base.yaml',
     device='cpu'
 ):

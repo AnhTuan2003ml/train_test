@@ -146,12 +146,12 @@ class AudioSep(pl.LightningModule, PyTorchModelHubMixin):
     
 
 def get_model_class(model_type):
-    print(model_type)
-    if model_type == 'ResUNet30':
+    print('DenseUNet30')
+    if model_type == 'ResUNet30' or model_type == 'DenseUNet30':
         from models.resunet import ResUNet30
         return ResUNet30
-    if model_type == 'DenseUNet30':
-        from models.denseunet import DenseUNet30
-        return DenseUNet30
+    # if model_type == 'DenseUNet30':
+    #     from models.denseunet import DenseUNet30
+    #     return DenseUNet30
     else:
         raise NotImplementedError
